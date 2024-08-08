@@ -101,6 +101,10 @@ def getTickerChartForRange(ticker, range):
             interval = "1wk"
         case "2y":
             interval = "1wk"
+        case "5y":
+            interval = "1wk"
+        case "10y":
+            interval = "1wk"
         case _:
             print("Unknown range: " + range)
             return None
