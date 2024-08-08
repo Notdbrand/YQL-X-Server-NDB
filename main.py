@@ -106,4 +106,4 @@ if __name__ == '__main__':
         with open("generatedWoeids.json", "w") as database:
             database.write(json.dumps({}))
             database.close()
-    app.run(host="0.0.0.0", port=5002)
+    app.run(host="0.0.0.0", port=8000)
