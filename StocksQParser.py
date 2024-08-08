@@ -14,6 +14,8 @@ def parseQuery(q):
             parts = child.text
         if child.tag == 'range':
             range = child.text
+        if child.tag == 'phrase':
+            symbols.append(child.text)
 
     results.update({"symbols": symbols})
     results.update({"parts": parts})
