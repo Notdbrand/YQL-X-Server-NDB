@@ -1,25 +1,30 @@
-import yfinance, datetime
+import yfinance
+import datetime
 from urllib.parse import unquote
 
-# Cache responses per hour so we don't abuse the API and also for performance reasons.
-cachedResponses = {}
-cachedChartResponses = {}
-
-def getTickerInfo(ticker):
-    if ticker in cachedResponses and cachedResponses[ticker]['timestamp'] == datetime.datetime.now().strftime("%h"):
-        print("Returning cached response for ticker %s" % ticker)
-        return cachedResponses[ticker]
-    else:
-        print("Getting real response for ticker %s" % ticker)
-        return getTickerInfoReal(ticker)
+def getTickerInfo(ticker): #Disabled Caching so most up-to-date information is always retrieved
+    print("Getting real response for ticker %s" % ticker)
+    return getTickerInfoReal(ticker)
 
 def getTickerInfoReal(tickerName):
     ticker = yfinance.Ticker(tickerName)
-    changes = getTickerChanges(ticker)
     info = ticker.info
     if not info:
         return None
-    info.update(changes)
+        
+    data = ticker.history(period='5d')
+    open_price = data['Open'].iloc[0]
+    current_price = data['Close'].iloc[-1]
+    previous_close = data['Close'].iloc[-2]
+    percentage_difference = ((current_price - previous_close) / previous_close) * 100
+    price_change = current_price - previous_close
+    
+    
+    info.update({"Open": float(open_price)})
+    info.update({"currentPrice": float(round(current_price, 2))})
+    info.update({"changepercent": float(round(price_change, 2)), "change": float(round(percentage_difference, 2))})
+    
+    
     info.update({"timestamp": datetime.datetime.now().strftime("%h")})
     info["noopen"] = False
     if not "open" in info:
@@ -33,64 +38,22 @@ def getTickerInfoReal(tickerName):
         info["marketCap"] = 0
     if not "dividendYield" in info:
         info["dividendYield"] = 0
-    if not ticker in cachedResponses:
-        cachedResponses.update({tickerName: info})
-    else:
-        cachedResponses[ticker] = {tickerName: info}
+    #print(info)
     return info
-
-def getTickerChanges(ticker):
-    try:
-        # Check if 'regularMarketPreviousClose' and 'regularMarketPrice' are available
-        if 'previousClose' in ticker.info and 'currentPrice' in ticker.info:
-            previous_close = ticker.info['previousClose']
-            current_price = ticker.info['currentPrice']
-
-            # Calculate the change and change percent
-            change = abs(round(previous_close - current_price, 2))
-            change_percent = calculateChange(previous_close, current_price)
-            print(f"Change: {change}, Change Percent: {change_percent}")
-            return {"change": change, "changepercent": change_percent}
-        else:
-            # Data not available, return default values
-            return {"change": 0, "changepercent": "0%"}
-    except Exception as e:
-        print(e)
-        return {"change": 0, "changepercent": "0%"}
-
-def calculateChange(current, previous):
-    sign = "+"
-
-    if current == previous:
-        return "0%"
-    elif current < previous:
-        sign = "-"
-    try:
-        return sign + format((abs(current - previous) / previous) * 100.0, '.2f') + "%"
-    except ZeroDivisionError:
-        return "x%"
 
 def sanitizeSymbol(s):
     return unquote(s)
 
 def getTickerChartForRange(ticker, range):
-    # Generate a cache key based on ticker and range
-    cache_key = f"{ticker}_{range}"
-
-    # Check if the data is cached and still valid
-    if cache_key in cachedChartResponses and cachedChartResponses[cache_key]['timestamp'] == datetime.datetime.now().strftime("%h"):
-        print(f"Returning cached response for {ticker} - {range}")
-        return cachedChartResponses[cache_key]['data']
-
-    # If not cached or cache has expired, fetch the data
     match range:
         case "1d":
             interval = "15m"
         case "5d":
-            interval = "1d"
+            range = "5d"
+            interval = "5m"
         case "1m":
             range = "1mo"
-            interval = "1h"
+            interval = "1d"
         case "3m":
             range = "3mo"
             interval = "1d"
@@ -116,8 +79,5 @@ def getTickerChartForRange(ticker, range):
     out = [{"open": data_dict["Open"][key], "high": data_dict["High"][key], "low": data_dict["Low"][key],
             "close": data_dict["Close"][key], "volume": data_dict["Volume"][key], "timestamp": key.timestamp()} for key
            in data_dict["Open"].keys()]
-
-    # Update the cache with the new data
-    cachedChartResponses[cache_key] = {'data': out, 'timestamp': datetime.datetime.now().strftime("%h")}
 
     return out
