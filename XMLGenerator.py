@@ -462,7 +462,7 @@ def getStocksXMLWithQandType(q, type):
                         <symbol>{sanitizedSymbol}</symbol>
                         <sname>{(tickerInfo['longName'][:12] + '...') if len(tickerInfo['longName']) > 12 else tickerInfo['longName']}</sname>
                         <open>{tickerInfo['open']}</open>
-                        <price>{tickerInfo['regularMarketOpen']}</price>
+                        <price>{tickerInfo['currentPrice']}</price>
                         <change>{tickerInfo['changepercent']}</change>
                         <realtimechange>{tickerInfo['changepercent']}</realtimechange>
                         <changepercent>{tickerInfo['changepercent']}</changepercent>
