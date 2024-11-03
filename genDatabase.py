@@ -1,6 +1,6 @@
 import json
 
-tsv_file = open("geoplanet_places_7.10.0.tsv", "r")
+tsv_file = open("geoplanet_places_7.10.0.tsv", "r", encoding='utf-8')
 json_file = open("geoDatabase.json", "w")
 jsondict = {"small": {}, "state": {}, "country": {}, "city": {}, "woeid": {}}
 for line in tsv_file:
